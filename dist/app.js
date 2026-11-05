@@ -7,6 +7,7 @@
   const defaults=()=>({answers:{},notes:{},rectangle:[],rectangleDone:false,chocolate:Array(24).fill(0),lastSection:1});
   let state=defaults(), storageOK=true, result=null, activeSection=1, chosenFriend=1, lineChoices={a:0,b:0};
   const fields=[];
+  let sectionResults={};
   const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fraction=s=>{const [n,d]=s.split('/');return `<span class="fraction" aria-label="${n} durch ${d}"><span>${n}</span><span>${d}</span></span>`;};
   const display=s=>String(s).includes('/')?fraction(s):escape(s);
@@ -93,16 +94,16 @@
   function completeField(f) {return String(state.answers[f.id]||'').trim().length>0;}
   function completed(section=0) {return fields.filter(f=>(!section||f.section===section)&&completeField(f)).length+((!section||section===3)?Number(state.rectangleDone)+Number(state.chocolate.every(Boolean)):0);}
   function totalFor(section) {return fields.filter(f=>f.section===section).length+(section===3?2:0);}
-  function clearResult() {if(!result)return;result=null;document.querySelectorAll('.is-correct,.is-incorrect').forEach(e=>e.classList.remove('is-correct','is-incorrect'));document.querySelectorAll('[aria-invalid]').forEach(e=>e.removeAttribute('aria-invalid'));document.querySelectorAll('.field-feedback,.special-feedback').forEach(e=>e.textContent='');document.getElementById('results')?.replaceChildren();}
+  function clearResult() {delete sectionResults[activeSection];if(!result)return;result=null;document.querySelectorAll('.is-correct,.is-incorrect').forEach(e=>e.classList.remove('is-correct','is-incorrect'));document.querySelectorAll('[aria-invalid]').forEach(e=>e.removeAttribute('aria-invalid'));document.querySelectorAll('.field-feedback,.special-feedback').forEach(e=>e.textContent='');document.getElementById('results')?.replaceChildren();}
   function home() {
     const done=completed();
     document.title='Mein Matheheft · Mathematik';
-    document.getElementById('main').innerHTML=`<div class="home"><section class="hero"><div><p class="eyebrow">DEIN PLATZ ZUM ÜBEN</p><h1>Mathe,<br>ganz in Ruhe<span>.</span></h1><p class="hero-description">Ein Heft zum Nachdenken, Ausprobieren und Weiterlernen.<br class="desktop-only"> Deine Antworten warten hier auf dich.</p></div><div class="hero-art" aria-hidden="true"><div class="paper paper-back"></div><div class="paper paper-front"><div class="paper-label">JEDEN TAG EIN BISSCHEN</div><div class="paper-equation">${fraction('3/4')}<span>=</span><span>0,75</span></div><div class="paper-grid">${Array.from({length:8},(_,i)=>`<span class="${i<6?'painted':''}"></span>`).join('')}</div><div class="pencil-line"></div></div><span class="art-spark">✳</span></div></section><section class="notebook-list" aria-labelledby="notebook-heading"><div class="list-heading"><h2 id="notebook-heading">Deine Übungsblätter</h2><span>01 Übungsblatt</span></div><a class="sheet-card" href="#${sheetId}/${state.lastSection}"><div class="card-symbol" aria-hidden="true">½</div><div class="card-content"><div class="card-meta"><time datetime="2026-11-05">5. NOV. 2026</time><span>KLASSE 6</span><span class="language-tag">DE</span></div><h3>Brüche und Dezimalzahlen</h3><p>Brüche vergleichen, kürzen und Anteile berechnen. Dazu Zahlengeraden, Dezimalzahlen und periodische Divisionen.</p><div class="card-bottom"><span>7 Kapitel · Mathematik, Klasse 6</span><span class="card-progress">${done?`${done} von ${total} Antworten`:'Noch nicht begonnen'}</span></div><div class="progress-track"><span style="width:${done/total*100}%"></span></div></div><span class="card-arrow" aria-hidden="true">↗</span></a></section><div class="home-note"><span aria-hidden="true">✧</span><p><strong>Ohne Eile, ohne Papier.</strong> Bearbeite das ganze Übungsblatt, um deine Antworten zu prüfen. Danach kannst du Fehler verbessern und es erneut versuchen.</p></div></div>`;
+    document.getElementById('main').innerHTML=`<div class="home"><section class="hero"><div><p class="eyebrow">DEIN PLATZ ZUM ÜBEN</p><h1>Mathe,<br>ganz in Ruhe<span>.</span></h1><p class="hero-description">Ein Heft zum Nachdenken, Ausprobieren und Weiterlernen.<br class="desktop-only"> Deine Antworten warten hier auf dich.</p></div><div class="hero-art" aria-hidden="true"><div class="paper paper-back"></div><div class="paper paper-front"><div class="paper-label">JEDEN TAG EIN BISSCHEN</div><div class="paper-equation">${fraction('3/4')}<span>=</span><span>0,75</span></div><div class="paper-grid">${Array.from({length:8},(_,i)=>`<span class="${i<6?'painted':''}"></span>`).join('')}</div><div class="pencil-line"></div></div><span class="art-spark">✳</span></div></section><section class="notebook-list" aria-labelledby="notebook-heading"><div class="list-heading"><h2 id="notebook-heading">Deine Übungsblätter</h2><span>01 Übungsblatt</span></div><a class="sheet-card" href="#${sheetId}/${state.lastSection}"><div class="card-symbol" aria-hidden="true">½</div><div class="card-content"><div class="card-meta"><time datetime="2026-11-05">5. NOV. 2026</time><span>KLASSE 6</span><span class="language-tag">DE</span></div><h3>Brüche und Dezimalzahlen</h3><p>Brüche vergleichen, kürzen und Anteile berechnen. Dazu Zahlengeraden, Dezimalzahlen und periodische Divisionen.</p><div class="card-bottom"><span>7 Kapitel · Mathematik, Klasse 6</span><span class="card-progress">${done?`${done} von ${total} Antworten`:'Noch nicht begonnen'}</span></div><div class="progress-track"><span style="width:${done/total*100}%"></span></div></div><span class="card-arrow" aria-hidden="true">↗</span></a></section><div class="home-note"><span aria-hidden="true">✧</span><p><strong>Ohne Eile, ohne Papier.</strong> Bearbeite ein Kapitel vollständig, um seine Antworten zu prüfen. Danach kannst du Fehler verbessern und es erneut versuchen.</p></div></div>`;
     updateSaveStatus();
   }
   function worksheet() {
     document.title=`${activeSection}. ${shortTitles[activeSection-1]} · Mein Matheheft`;
-    document.getElementById('main').innerHTML=`<div class="workspace"><aside class="sidebar"><a class="back-link" href="#">← Alle Übungsblätter</a><p class="eyebrow">MATHEMATIK · KLASSE 6</p><h1>Brüche und<br>Dezimalzahlen</h1><p class="sidebar-date">Übungsblatt vom 5. November 2026</p><nav class="section-nav" aria-label="Kapitel des Übungsblatts">${shortTitles.map((t,i)=>`<a href="#${sheetId}/${i+1}" data-nav="${i+1}" ${activeSection===i+1?'aria-current="step"':''}><span class="section-number">${i+1}</span><span>${t}</span><span class="section-status" data-section-status="${i+1}"></span></a>`).join('')}</nav><div class="sidebar-progress"><div><strong>Dein Fortschritt</strong><span id="progress-count"></span></div><progress id="worksheet-progress" max="${total}" value="0" aria-label="Ausgefüllte Antworten"></progress><p id="progress-caption"></p></div><button class="text-button reset-button" data-reset>↺ Alles löschen</button></aside><div class="worksheet-body"><div class="worksheet-topline"><span>WIEDERHOLUNG · BRÜCHE & DEZIMALZAHLEN</span><span id="section-counter"></span></div>${contents.map((c,i)=>`<section class="section-panel" id="section-${i+1}" data-section="${i+1}" ${i+1!==activeSection?'hidden':''} aria-labelledby="heading-${i+1}"><div class="section-heading"><span class="large-section-number">${String(i+1).padStart(2,'0')}</span><div><p class="eyebrow">KAPITEL ${i+1} VON 7</p><h2 id="heading-${i+1}" lang="de" tabindex="-1">${titles[i]}</h2></div></div>${c}${i!==6?`<details class="notes"><summary>✎ Platz für meine Gedanken <span>(freiwillig)</span></summary><label class="sr-only" for="note-${i+1}">Notizen zu Kapitel ${i+1}</label><textarea class="scratchpad" id="note-${i+1}" data-note="${i+1}" rows="4" placeholder="Rechenwege, Ideen, Zwischenschritte…">${escape(state.notes[i+1]||'')}</textarea></details>`:''}</section>`).join('')}<div class="section-pagination"><a class="button secondary" id="previous-section">← Zurück</a><span id="pagination-status"></span><a class="button secondary" id="next-section">Weiter →</a></div><section id="results" aria-live="polite"></section><div class="check-bar"><div><strong id="check-title">Jeder Schritt zählt.</strong><p id="check-hint"></p></div><button class="button primary" id="check-all" disabled>Antworten prüfen <span aria-hidden="true">✓</span></button></div></div></div>`;
+    document.getElementById('main').innerHTML=`<div class="workspace"><aside class="sidebar"><a class="back-link" href="#">← Alle Übungsblätter</a><p class="eyebrow">MATHEMATIK · KLASSE 6</p><h1>Brüche und<br>Dezimalzahlen</h1><p class="sidebar-date">Übungsblatt vom 5. November 2026</p><nav class="section-nav" aria-label="Kapitel des Übungsblatts">${shortTitles.map((t,i)=>`<a href="#${sheetId}/${i+1}" data-nav="${i+1}" ${activeSection===i+1?'aria-current="step"':''}><span class="section-number">${i+1}</span><span>${t}</span><span class="section-status" data-section-status="${i+1}"></span></a>`).join('')}</nav><div class="sidebar-progress"><div><strong>Dein Fortschritt</strong><span id="progress-count"></span></div><progress id="worksheet-progress" max="${total}" value="0" aria-label="Ausgefüllte Antworten"></progress><p id="progress-caption"></p></div><button class="text-button reset-button" data-reset>↺ Alles löschen</button></aside><div class="worksheet-body"><div class="worksheet-topline"><span>WIEDERHOLUNG · BRÜCHE & DEZIMALZAHLEN</span><span id="section-counter"></span></div>${contents.map((c,i)=>`<section class="section-panel" id="section-${i+1}" data-section="${i+1}" ${i+1!==activeSection?'hidden':''} aria-labelledby="heading-${i+1}"><div class="section-heading"><span class="large-section-number">${String(i+1).padStart(2,'0')}</span><div><p class="eyebrow">KAPITEL ${i+1} VON 7</p><h2 id="heading-${i+1}" lang="de" tabindex="-1">${titles[i]}</h2></div></div>${c}${i!==6?`<details class="notes"><summary>✎ Platz für meine Gedanken <span>(freiwillig)</span></summary><label class="sr-only" for="note-${i+1}">Notizen zu Kapitel ${i+1}</label><textarea class="scratchpad" id="note-${i+1}" data-note="${i+1}" rows="4" placeholder="Rechenwege, Ideen, Zwischenschritte…">${escape(state.notes[i+1]||'')}</textarea></details>`:''}</section>`).join('')}<div class="section-pagination"><a class="button secondary" id="previous-section">← Zurück</a><span id="pagination-status"></span><a class="button secondary" id="next-section">Weiter →</a></div><section id="results" aria-live="polite"></section><div class="check-bar"><div><strong id="check-title">Jeder Schritt zählt.</strong><p id="check-hint"></p></div><button class="button primary" id="check-all" disabled>Kapitel prüfen <span aria-hidden="true">✓</span></button></div></div></div>`;
     // contents are cached markup; restore the latest values after every route render.
     document.querySelectorAll('[data-answer]').forEach(e=>e.value=state.answers[e.dataset.answer]||'');
     document.querySelectorAll('[data-note]').forEach(e=>e.value=state.notes[e.dataset.note]||'');
@@ -113,7 +114,7 @@
   function route() {
     const match=location.hash.match(/^#repaso-6\/([1-7])$/);
     if(!match){home();return;}
-    activeSection=Number(match[1]);state.lastSection=activeSection;save();worksheet();
+    activeSection=Number(match[1]);result=sectionResults[activeSection]||null;state.lastSection=activeSection;save();worksheet();
   }
   function updateNavigation() {
     const nav=document.querySelector('.section-nav'),current=nav.querySelector('[aria-current]');
@@ -126,13 +127,13 @@
   }
   function updateProgress() {
     if(!document.getElementById('progress-count'))return;
-    const n=completed(),remaining=total-n;
+    const n=completed(),remaining=totalFor(activeSection)-completed(activeSection);
     document.getElementById('progress-count').textContent=`${n} / ${total}`;
     document.getElementById('worksheet-progress').value=n;
-    document.getElementById('progress-caption').textContent=n===total?'Alles bereit zum Prüfen.':'Du kannst jederzeit aufhören und später weitermachen.';
+    document.getElementById('progress-caption').textContent=n===total?'Alle Kapitel ausgefüllt.':'Du kannst jederzeit aufhören und später weitermachen.';
     document.getElementById('check-all').disabled=remaining!==0;
-    document.getElementById('check-title').textContent=remaining?'Jeder Schritt zählt.':'Alles ausgefüllt!';
-    document.getElementById('check-hint').textContent=remaining?`Noch ${remaining} Antworten fehlen. Danach kannst du alles prüfen.`:'Du kannst jetzt alle deine Antworten prüfen.';
+    document.getElementById('check-title').textContent=remaining?'Jeder Schritt zählt.':'Kapitel vollständig!';
+    document.getElementById('check-hint').textContent=remaining?`In diesem Kapitel fehlen noch ${remaining} Antworten.`:'Du kannst jetzt die Antworten dieses Kapitels prüfen.';
     for(let i=1;i<=7;i++){const el=document.querySelector(`[data-section-status="${i}"]`),done=completed(i)===totalFor(i);el.textContent=done?'✓':'';el.setAttribute('aria-label',done?'Fertig':`${completed(i)} von ${totalFor(i)}`);}
     updateSaveStatus();
   }
@@ -156,24 +157,26 @@
   }
   function setLine(id,value) {clearResult();state.answers[`4${id}-${lineChoices[id]}`]=String(Math.max(lineConfig[id].start,Math.min(lineConfig[id].start+30,value)));save();drawLine(id);updateProgress();}
   function verify() {
-    if(completed()!==total)return;
-    result={};fields.forEach(f=>result[f.id]=PracticeMath.check(state.answers[f.id],f.answer,f.type));
-    result.rectangle=PracticeMath.rectangle(state.rectangle);result.chocolate=PracticeMath.chocolate(state.chocolate);
+    if(completed(activeSection)!==totalFor(activeSection))return;
+    result={};fields.filter(f=>f.section===activeSection).forEach(f=>result[f.id]=PracticeMath.check(state.answers[f.id],f.answer,f.type));
+    if(activeSection===3){result.rectangle=PracticeMath.rectangle(state.rectangle);result.chocolate=PracticeMath.chocolate(state.chocolate);}
+    sectionResults[activeSection]=result;
     showResults();document.getElementById('results').scrollIntoView({behavior:'smooth',block:'center'});
   }
   function showResults() {
     if(!result)return;
-    fields.forEach(f=>{
+    const total=totalFor(activeSection);
+    fields.filter(f=>f.section===activeSection).forEach(f=>{
       const wrap=document.querySelector(`[data-wrap="${f.id}"]`);if(!wrap)return;
       const ok=result[f.id];wrap.classList.toggle('is-correct',ok);wrap.classList.toggle('is-incorrect',!ok);
       wrap.querySelector('input,select').setAttribute('aria-invalid',!ok);
       wrap.querySelector('.field-feedback').textContent=ok?'✓ Richtig':'↺ Prüfen';
     });
-    for(const id of ['rectangle','chocolate']) {const el=document.getElementById(`${id}-feedback`);el.textContent=result[id]?'✓ Richtig!':'↺ Überprüfe diese Zeichnung und versuche es noch einmal.';el.className=`special-feedback ${result[id]?'is-correct':'is-incorrect'}`;}
-    for(const id of ['a','b']){const wrong=lineConfig[id].targets.filter((v,i)=>!result[`4${id}-${i}`]);const el=document.getElementById(`line-feedback-${id}`);el.textContent=wrong.length?`↺ Überprüfe die Position von: ${wrong.map(decimal).join(' · ')}.`:'✓ Alle Zahlen sind richtig eingetragen.';el.className=`special-feedback ${wrong.length?'is-incorrect':'is-correct'}`;}
+    if(activeSection===3)for(const id of ['rectangle','chocolate']) {const el=document.getElementById(`${id}-feedback`);el.textContent=result[id]?'✓ Richtig!':'↺ Überprüfe diese Zeichnung und versuche es noch einmal.';el.className=`special-feedback ${result[id]?'is-correct':'is-incorrect'}`;}
+    if(activeSection===4)for(const id of ['a','b']){const wrong=lineConfig[id].targets.filter((v,i)=>!result[`4${id}-${i}`]);const el=document.getElementById(`line-feedback-${id}`);el.textContent=wrong.length?`↺ Überprüfe die Position von: ${wrong.map(decimal).join(' · ')}.`:'✓ Alle Zahlen sind richtig eingetragen.';el.className=`special-feedback ${wrong.length?'is-incorrect':'is-correct'}`;}
     const right=Object.values(result).filter(Boolean).length;
-    const wrongSections=Array.from({length:7},(_,i)=>i+1).filter(i=>fields.some(f=>f.section===i&&!result[f.id])||(i===3&&(!result.rectangle||!result.chocolate)));
-    document.getElementById('results').innerHTML=`<div class="results-card ${right===total?'perfect':''}"><span class="results-icon" aria-hidden="true">${right===total?'✳':'↗'}</span><div><p class="eyebrow">DEIN ERGEBNIS</p><h2>${right===total?'Alles richtig! Gut gemacht.':`${right} von ${total} Antworten richtig`}</h2><p>${right===total?'Du hast die Wiederholung zu Brüchen und Dezimalzahlen geschafft.':'Fehler gehören zum Lernen. Überarbeite die markierten Antworten und prüfe sie noch einmal.'}</p>${wrongSections.length?`<div class="review-links">${wrongSections.map(i=>`<a href="#${sheetId}/${i}">Kapitel ${i} prüfen ↗</a>`).join('')}</div>`:''}</div></div>`;
+
+    document.getElementById('results').innerHTML=`<div class="results-card ${right===total?'perfect':''}"><span class="results-icon" aria-hidden="true">${right===total?'✳':'↗'}</span><div><p class="eyebrow">DEIN ERGEBNIS · KAPITEL ${activeSection}</p><h2>${right===total?'Alles richtig! Gut gemacht.':`${right} von ${total} Antworten richtig`}</h2><p>${right===total?'Du hast dieses Kapitel geschafft.':'Fehler gehören zum Lernen. Überarbeite die markierten Antworten und prüfe sie noch einmal.'}</p></div></div>`;
   }
   document.addEventListener('input',e=>{
     if(e.target.matches('[data-answer]')) {clearResult();state.answers[e.target.dataset.answer]=e.target.value;save();updateProgress();}
@@ -189,7 +192,7 @@
     if(button.hasAttribute('data-reset'))document.getElementById('reset-dialog').showModal();
     if(button.id==='cancel-reset')document.getElementById('reset-dialog').close();
     if(button.id==='confirm-reset'){
-      state=defaults();result=null;try{localStorage.removeItem(STORAGE_KEY);storageOK=true;}catch{storageOK=false;}
+      state=defaults();result=null;sectionResults={};try{localStorage.removeItem(STORAGE_KEY);storageOK=true;}catch{storageOK=false;}
       document.getElementById('reset-dialog').close();chosenFriend=1;lineChoices={a:0,b:0};route();
     }
     if(button.id==='check-all')verify();

@@ -25,7 +25,7 @@ Como alternativa, abre `dist/index.html` directamente. Funciona sin servidor, au
 - Se guardan automáticamente las respuestas, los dibujos, las notas y el último capítulo abierto.
 - Los datos pertenecen al navegador y a la dirección exacta utilizada. Cambiar de dispositivo, navegador, puerto o entre localhost y la dirección de red crea un espacio de respuestas distinto. No hay sincronización.
 - Borrar los datos del navegador también borra las respuestas. El modo privado puede eliminarlas al cerrar la sesión.
-- «Antworten prüfen» solo se activa cuando están completas las 106 respuestas. Para el rectángulo hay que marcar «Mein Rechteck ist fertig»; todas las piezas del chocolate deben estar asignadas.
+- «Kapitel prüfen» se activa al completar todas las respuestas de la sección visible, independientemente del resto de la ficha. Cada sección se corrige por separado; los resultados se conservan al navegar durante la sesión y se invalidan solo al editar esa sección. Para el rectángulo hay que marcar «Mein Rechteck ist fertig»; todas las piezas del chocolate deben estar asignadas.
 - La corrección marca aciertos y errores, sin mostrar la solución. Permite modificar respuestas y volver a comprobar.
 - Se aceptan coma y punto decimal. Los períodos se escriben entre paréntesis; los números mixtos, como `2 1/3`. Las fracciones deben estar simplificadas cuando el enunciado lo pide.
 - «Alles löschen» solicita confirmación y borra solo esta ficha. No vacía los datos de otras webs.
@@ -60,3 +60,5 @@ node --test tests/math.test.cjs
 ```
 
 La revisión en navegador incluye completar las 106 respuestas, corrección con un error intencionado, reintento correcto, persistencia tras recargar, bloqueo con una sola respuesta pendiente y borrado con confirmación.
+
+La comprobación por sección permite recibir feedback al terminar cada capítulo. El progreso general sigue contabilizando las 106 respuestas de toda la ficha.
