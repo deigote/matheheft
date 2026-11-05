@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#24594b">
+  <meta name="description" content="Mathematik in deinem Tempo üben. Interaktive Aufgaben mit automatischem Speichern und Antwortprüfung.">
+  <title>Mein Matheheft · Mathematik</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="math.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Zum Inhalt</a>
+  <header class="site-header">
+    <a class="brand" href="#" aria-label="Mein Matheheft, Startseite"><span class="brand-icon" aria-hidden="true">▤</span> mein matheheft<span class="brand-dot">.</span></a>
+    <span class="header-caption">Zeit für Mathe</span>
+    <span class="save-status" id="save-status" role="status"><span aria-hidden="true">●</span> In diesem Browser gespeichert</span>
+  </header>
+  <main id="main" tabindex="-1"></main>
+  <footer class="site-footer"><span>Lernen in deinem Tempo.</span><span>Deine Antworten bleiben in diesem Browser.</span></footer>
+  <dialog id="reset-dialog" aria-labelledby="reset-title" aria-describedby="reset-description">
+    <div class="dialog-icon" aria-hidden="true">↺</div><h2 id="reset-title">Neu anfangen?</h2>
+    <p id="reset-description">Alle Antworten, Zeichnungen und Notizen dieses Übungsblatts werden in diesem Browser gelöscht. Das lässt sich nicht rückgängig machen.</p>
+    <div class="dialog-actions"><button class="button secondary" id="cancel-reset">Weiterüben</button><button class="button danger" id="confirm-reset">Alles löschen</button></div>
+  </dialog>
+  <noscript>Aktiviere JavaScript, um die Aufgaben zu bearbeiten und zu speichern.</noscript>
+</body>
+</html>
