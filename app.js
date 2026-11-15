@@ -1,9 +1,14 @@
 (() => {
   'use strict';
-  const STORAGE_KEY='mi-cuaderno:repaso-matematicas-6:2026-11-05:v1';
-  const sheetId='repaso-6';
-  const titles=['Brüche vergleichen und ordnen','Kürzen und Erweitern','Anteile berechnen','Dezimalzahlen auf der Zahlengeraden','Bruch und Dezimalzahl','Dezimalzahlen vergleichen und ordnen','Brüche in Dezimalzahlen umwandeln'];
-  const shortTitles=['Brüche vergleichen','Kürzen und Erweitern','Anteile berechnen','Zahlengeraden','Brüche und Dezimalzahlen','Dezimalzahlen vergleichen','Division und Perioden'];
+  let STORAGE_KEY='mi-cuaderno:repaso-matematicas-6:2026-11-05:v1';
+  let sheetId='repaso-6';
+  const additionId='brueche-addieren';
+  const additionTasks=[['1/3','1/4','7/12'],['1/6','1/10','4/15'],['2/5','1/6','17/30'],['1/6','3/10','7/15'],['3/8','1/3','17/24'],['5/6','3/10','17/15'],['1/6','1/4','5/12'],['1/10','1/14','6/35']];
+  const reviewTitles=['Brüche vergleichen und ordnen','Kürzen und Erweitern','Anteile berechnen','Dezimalzahlen auf der Zahlengeraden','Bruch und Dezimalzahl','Dezimalzahlen vergleichen und ordnen','Brüche in Dezimalzahlen umwandeln'];
+  const reviewShortTitles=['Brüche vergleichen','Kürzen und Erweitern','Anteile berechnen','Zahlengeraden','Brüche und Dezimalzahlen','Dezimalzahlen vergleichen','Division und Perioden'];
+  let titles=reviewTitles,shortTitles=reviewShortTitles;
+  const isAddition=()=>sheetId===additionId;
+  const storageKey=id=>id===additionId?'mi-cuaderno:brueche-addieren:2026-11-15:v1':'mi-cuaderno:repaso-matematicas-6:2026-11-05:v1';
   const defaults=()=>({answers:{},notes:{},rectangle:[],rectangleDone:false,chocolate:Array(24).fill(0),lastSection:1});
   let state=defaults(), storageOK=true, result=null, activeSection=1, chosenFriend=1, lineChoices={a:0,b:0};
   const fields=[];
@@ -11,7 +16,9 @@
   const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fraction=s=>{const [n,d]=s.split('/');return `<span class="fraction" aria-label="${n} durch ${d}"><span>${n}</span><span>${d}</span></span>`;};
   const display=s=>String(s).includes('/')?fraction(s):escape(s);
-  try {
+  function loadState() {
+    state=defaults();storageOK=true;
+    try {
     const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
     if(saved&&typeof saved==='object') {
       state={...defaults(),...saved};
@@ -20,9 +27,11 @@
       state.rectangle=Array.isArray(saved.rectangle)?[...new Set(saved.rectangle.filter(n=>Number.isInteger(n)&&n>=0&&n<36&&!([0,1,2,12,13,14].includes(n))))]:[];
       state.rectangleDone=saved.rectangleDone===true;
       state.chocolate=Array.from({length:24},(_,i)=>Number.isInteger(saved.chocolate?.[i])&&saved.chocolate[i]>=0&&saved.chocolate[i]<=8?saved.chocolate[i]:0);
-      state.lastSection=Number.isInteger(saved.lastSection)&&saved.lastSection>=1&&saved.lastSection<=7?saved.lastSection:1;
+      state.lastSection=Number.isInteger(saved.lastSection)&&saved.lastSection>=1&&saved.lastSection<=titles.length?saved.lastSection:1;
     }
   } catch {storageOK=false;}
+  }
+  loadState();
   function save() {
     try {localStorage.setItem(STORAGE_KEY,JSON.stringify(state));storageOK=true;} catch {storageOK=false;}
     updateSaveStatus();
@@ -51,6 +60,7 @@
   }
   function renderContent() {
     fields.length=0;
+    if(isAddition())return [task('a','Addiere die Brüche und kürze das Ergebnis vollständig.',rows(additionTasks.map(([a,b,answer],i)=>row(i+1,`${fraction(a)} + ${fraction(b)} = ${input(`1sum-${i}`,answer,'reduced',`Aufgabe ${i+1}: ${a} plus ${b}, vollständig gekürzt`)}`))),'Finde einen gemeinsamen Nenner. Manche Ergebnisse lassen sich kürzen, andere nicht. Schreibe deine Antwort als Bruch a/b, auch wenn sie größer als 1 ist.')];
     const sections=[];
     const compares=[['4/7','5/7','<'],['3/5','9/15','='],['5/8','2/3','<'],['7/9','3/4','>'],['5/6','8/10','>'],['3/10','1/3','<'],['7/12','2/3','<'],['4/9','8/18','=']];
     sections.push(task('a','Setze jeweils das richtige Zeichen <, > oder = ein.',rows(compares.map(([a,b,c],i)=>row(i+1,`${fraction(a)}${input(`1a-${i}`,c,'symbol',`1a, ${i+1}: ${a} verglichen mit ${b}`)}${fraction(b)}`))))+
@@ -89,41 +99,56 @@
     targets.forEach((v,i)=>fields.push({id:`4${id}-${i}`,answer:String(v),type:'integer',section:4}));
     return `<p class="interaction-help">Wähle eine Zahl und klicke auf den passenden Strich. Mit den Pfeilen kannst du die Position anpassen.</p><div class="number-chips" role="group" aria-label="Zahlen zum Eintragen">${targets.map((v,i)=>`<button class="number-chip" data-line-choice="${id}-${i}" aria-pressed="${i===lineChoices[id]}">${decimal(v)} <span id="placed-${id}-${i}"></span></button>`).join('')}</div><div class="numberline" data-line="${id}"><div class="line-markers" id="markers-${id}"></div><div class="line-ticks">${Array.from({length:31},(_,i)=>`<button class="tick ${i%10===0?'major':''}" data-tick="${id}-${i}" style="--tick:${i}" aria-label="Eintragen bei ${decimal(start+i)}"><span></span>${i%10===0?`<b>${((start+i)/100).toFixed(1).replace('.',',')}</b>`:''}</button>`).join('')}</div></div><div class="line-controls"><button class="button small secondary" data-move="${id}:-1" aria-label="Ausgewählte Zahl einen Strich nach links bewegen">←</button><span id="line-status-${id}" role="status"></span><button class="button small secondary" data-move="${id}:1" aria-label="Ausgewählte Zahl einen Strich nach rechts bewegen">→</button><button class="text-button" data-unplace="${id}">Zahl entfernen</button></div><p class="special-feedback" id="line-feedback-${id}"></p>`;
   }
-  const contents=renderContent();
-  const total=fields.length+2;
+  let contents=renderContent();
+  let total=fields.length+2;
   function completeField(f) {return String(state.answers[f.id]||'').trim().length>0;}
-  function completed(section=0) {return fields.filter(f=>(!section||f.section===section)&&completeField(f)).length+((!section||section===3)?Number(state.rectangleDone)+Number(state.chocolate.every(Boolean)):0);}
-  function totalFor(section) {return fields.filter(f=>f.section===section).length+(section===3?2:0);}
+  function completed(section=0) {return fields.filter(f=>(!section||f.section===section)&&completeField(f)).length+((!isAddition()&&(!section||section===3))?Number(state.rectangleDone)+Number(state.chocolate.every(Boolean)):0);}
+  function totalFor(section) {return fields.filter(f=>f.section===section).length+(!isAddition()&&section===3?2:0);}
   function clearResult() {delete sectionResults[activeSection];if(!result)return;result=null;document.querySelectorAll('.is-correct,.is-incorrect').forEach(e=>e.classList.remove('is-correct','is-incorrect'));document.querySelectorAll('[aria-invalid]').forEach(e=>e.removeAttribute('aria-invalid'));document.querySelectorAll('.field-feedback,.special-feedback').forEach(e=>e.textContent='');document.getElementById('results')?.replaceChildren();}
   function home() {
-    const done=completed();
+    const cards=[{id:additionId,date:'2026-11-15',label:'15. NOV. 2026',title:'Brüche addieren',description:'Einen gemeinsamen Nenner finden, Brüche addieren und Ergebnisse vollständig kürzen.',chapters:1,total:8,ids:additionTasks.map((_,i)=>`1sum-${i}`)},{id:'repaso-6',date:'2026-11-05',label:'5. NOV. 2026',title:'Brüche und Dezimalzahlen',description:'Brüche vergleichen, kürzen und Anteile berechnen. Dazu Zahlengeraden, Dezimalzahlen und periodische Divisionen.',chapters:7,total:106}].map(sheet=>{
+      let saved={};try{saved=JSON.parse(localStorage.getItem(storageKey(sheet.id))||'{}')||{};}catch{}
+      const answers=saved.answers||{};
+      const done=sheet.id===additionId?sheet.ids.filter(id=>String(answers[id]||'').trim()).length:Object.values(answers).filter(v=>typeof v==='string'&&v.trim()).length+Number(saved.rectangleDone===true)+Number(Array.isArray(saved.chocolate)&&saved.chocolate.length===24&&saved.chocolate.every(Boolean));
+      const last=Number.isInteger(saved.lastSection)&&saved.lastSection>=1&&saved.lastSection<=sheet.chapters?saved.lastSection:1;
+      return `<a class="sheet-card" href="#${sheet.id}/${last}"><div class="card-symbol" aria-hidden="true">${sheet.id===additionId?'+':'½'}</div><div class="card-content"><div class="card-meta"><time datetime="${sheet.date}">${sheet.label}</time><span>KLASSE 6</span><span class="language-tag">DE</span></div><h3>${sheet.title}</h3><p>${sheet.description}</p><div class="card-bottom"><span>${sheet.chapters} Kapitel · ${sheet.total} Antworten</span><span class="card-progress">${done?`${done} von ${sheet.total} Antworten`:'Noch nicht begonnen'}</span></div><div class="progress-track"><span style="width:${Math.min(100,done/sheet.total*100)}%"></span></div></div><span class="card-arrow" aria-hidden="true">↗</span></a>`;
+    }).join('');
     document.title='Mein Matheheft · Mathematik';
-    document.getElementById('main').innerHTML=`<div class="home"><section class="hero"><div><p class="eyebrow">DEIN PLATZ ZUM ÜBEN</p><h1>Mathe,<br>ganz in Ruhe<span>.</span></h1><p class="hero-description">Ein Heft zum Nachdenken, Ausprobieren und Weiterlernen.<br class="desktop-only"> Deine Antworten warten hier auf dich.</p></div><div class="hero-art" aria-hidden="true"><div class="paper paper-back"></div><div class="paper paper-front"><div class="paper-label">JEDEN TAG EIN BISSCHEN</div><div class="paper-equation">${fraction('3/4')}<span>=</span><span>0,75</span></div><div class="paper-grid">${Array.from({length:8},(_,i)=>`<span class="${i<6?'painted':''}"></span>`).join('')}</div><div class="pencil-line"></div></div><span class="art-spark">✳</span></div></section><section class="notebook-list" aria-labelledby="notebook-heading"><div class="list-heading"><h2 id="notebook-heading">Deine Übungsblätter</h2><span>01 Übungsblatt</span></div><a class="sheet-card" href="#${sheetId}/${state.lastSection}"><div class="card-symbol" aria-hidden="true">½</div><div class="card-content"><div class="card-meta"><time datetime="2026-11-05">5. NOV. 2026</time><span>KLASSE 6</span><span class="language-tag">DE</span></div><h3>Brüche und Dezimalzahlen</h3><p>Brüche vergleichen, kürzen und Anteile berechnen. Dazu Zahlengeraden, Dezimalzahlen und periodische Divisionen.</p><div class="card-bottom"><span>7 Kapitel · Mathematik, Klasse 6</span><span class="card-progress">${done?`${done} von ${total} Antworten`:'Noch nicht begonnen'}</span></div><div class="progress-track"><span style="width:${done/total*100}%"></span></div></div><span class="card-arrow" aria-hidden="true">↗</span></a></section><div class="home-note"><span aria-hidden="true">✧</span><p><strong>Ohne Eile, ohne Papier.</strong> Bearbeite ein Kapitel vollständig, um seine Antworten zu prüfen. Danach kannst du Fehler verbessern und es erneut versuchen.</p></div></div>`;
+    document.getElementById('main').innerHTML=`<div class="home"><section class="hero"><div><p class="eyebrow">DEIN PLATZ ZUM ÜBEN</p><h1>Mathe,<br>ganz in Ruhe<span>.</span></h1><p class="hero-description">Ein Heft zum Nachdenken, Ausprobieren und Weiterlernen.<br class="desktop-only"> Deine Antworten warten hier auf dich.</p></div><div class="hero-art" aria-hidden="true"><div class="paper paper-back"></div><div class="paper paper-front"><div class="paper-label">JEDEN TAG EIN BISSCHEN</div><div class="paper-equation">${fraction('3/4')}<span>=</span><span>0,75</span></div><div class="paper-grid">${Array.from({length:8},(_,i)=>`<span class="${i<6?'painted':''}"></span>`).join('')}</div><div class="pencil-line"></div></div><span class="art-spark">✳</span></div></section><section class="notebook-list" aria-labelledby="notebook-heading"><div class="list-heading"><h2 id="notebook-heading">Deine Übungsblätter</h2><span>02 Übungsblätter</span></div>${cards}</section><div class="home-note"><span aria-hidden="true">✧</span><p><strong>Ohne Eile, ohne Papier.</strong> Bearbeite ein Kapitel vollständig, um seine Antworten zu prüfen. Danach kannst du Fehler verbessern und es erneut versuchen.</p></div></div>`;
     updateSaveStatus();
   }
   function worksheet() {
     document.title=`${activeSection}. ${shortTitles[activeSection-1]} · Mein Matheheft`;
-    document.getElementById('main').innerHTML=`<div class="workspace"><aside class="sidebar"><a class="back-link" href="#">← Alle Übungsblätter</a><p class="eyebrow">MATHEMATIK · KLASSE 6</p><h1>Brüche und<br>Dezimalzahlen</h1><p class="sidebar-date">Übungsblatt vom 5. November 2026</p><nav class="section-nav" aria-label="Kapitel des Übungsblatts">${shortTitles.map((t,i)=>`<a href="#${sheetId}/${i+1}" data-nav="${i+1}" ${activeSection===i+1?'aria-current="step"':''}><span class="section-number">${i+1}</span><span>${t}</span><span class="section-status" data-section-status="${i+1}"></span></a>`).join('')}</nav><div class="sidebar-progress"><div><strong>Dein Fortschritt</strong><span id="progress-count"></span></div><progress id="worksheet-progress" max="${total}" value="0" aria-label="Ausgefüllte Antworten"></progress><p id="progress-caption"></p></div><button class="text-button reset-button" data-reset>↺ Alles löschen</button></aside><div class="worksheet-body"><div class="worksheet-topline"><span>WIEDERHOLUNG · BRÜCHE & DEZIMALZAHLEN</span><span id="section-counter"></span></div>${contents.map((c,i)=>`<section class="section-panel" id="section-${i+1}" data-section="${i+1}" ${i+1!==activeSection?'hidden':''} aria-labelledby="heading-${i+1}"><div class="section-heading"><span class="large-section-number">${String(i+1).padStart(2,'0')}</span><div><p class="eyebrow">KAPITEL ${i+1} VON 7</p><h2 id="heading-${i+1}" lang="de" tabindex="-1">${titles[i]}</h2></div></div>${c}${i!==6?`<details class="notes"><summary>✎ Platz für meine Gedanken <span>(freiwillig)</span></summary><label class="sr-only" for="note-${i+1}">Notizen zu Kapitel ${i+1}</label><textarea class="scratchpad" id="note-${i+1}" data-note="${i+1}" rows="4" placeholder="Rechenwege, Ideen, Zwischenschritte…">${escape(state.notes[i+1]||'')}</textarea></details>`:''}</section>`).join('')}<div class="section-pagination"><a class="button secondary" id="previous-section">← Zurück</a><span id="pagination-status"></span><a class="button secondary" id="next-section">Weiter →</a></div><section id="results" aria-live="polite"></section><div class="check-bar"><div><strong id="check-title">Jeder Schritt zählt.</strong><p id="check-hint"></p></div><button class="button primary" id="check-all" disabled>Kapitel prüfen <span aria-hidden="true">✓</span></button></div></div></div>`;
+    document.getElementById('main').innerHTML=`<div class="workspace"><aside class="sidebar"><a class="back-link" href="#">← Alle Übungsblätter</a><p class="eyebrow">MATHEMATIK · KLASSE 6</p><h1>${isAddition()?'Brüche<br>addieren':'Brüche und<br>Dezimalzahlen'}</h1><p class="sidebar-date">Übungsblatt vom ${isAddition()?'15.':'5.'} November 2026</p><nav class="section-nav" aria-label="Kapitel des Übungsblatts">${shortTitles.map((t,i)=>`<a href="#${sheetId}/${i+1}" data-nav="${i+1}" ${activeSection===i+1?'aria-current="step"':''}><span class="section-number">${i+1}</span><span>${t}</span><span class="section-status" data-section-status="${i+1}"></span></a>`).join('')}</nav><div class="sidebar-progress"><div><strong>Dein Fortschritt</strong><span id="progress-count"></span></div><progress id="worksheet-progress" max="${total}" value="0" aria-label="Ausgefüllte Antworten"></progress><p id="progress-caption"></p></div><button class="text-button reset-button" data-reset>↺ Alles löschen</button></aside><div class="worksheet-body"><div class="worksheet-topline"><span>${isAddition()?'BRUCHRECHNUNG · ADDITION':'WIEDERHOLUNG · BRÜCHE & DEZIMALZAHLEN'}</span><span id="section-counter"></span></div>${contents.map((c,i)=>`<section class="section-panel" id="section-${i+1}" data-section="${i+1}" ${i+1!==activeSection?'hidden':''} aria-labelledby="heading-${i+1}"><div class="section-heading"><span class="large-section-number">${String(i+1).padStart(2,'0')}</span><div><p class="eyebrow">KAPITEL ${i+1} VON ${titles.length}</p><h2 id="heading-${i+1}" lang="de" tabindex="-1">${titles[i]}</h2></div></div>${c}${i!==6?`<details class="notes"><summary>✎ Platz für meine Gedanken <span>(freiwillig)</span></summary><label class="sr-only" for="note-${i+1}">Notizen zu Kapitel ${i+1}</label><textarea class="scratchpad" id="note-${i+1}" data-note="${i+1}" rows="4" placeholder="Rechenwege, Ideen, Zwischenschritte…">${escape(state.notes[i+1]||'')}</textarea></details>`:''}</section>`).join('')}<div class="section-pagination"><a class="button secondary" id="previous-section">← Zurück</a><span id="pagination-status"></span><a class="button secondary" id="next-section">Weiter →</a></div><section id="results" aria-live="polite"></section><div class="check-bar"><div><strong id="check-title">Jeder Schritt zählt.</strong><p id="check-hint"></p></div><button class="button primary" id="check-all" disabled>Kapitel prüfen <span aria-hidden="true">✓</span></button></div></div></div>`;
     // contents are cached markup; restore the latest values after every route render.
     document.querySelectorAll('[data-answer]').forEach(e=>e.value=state.answers[e.dataset.answer]||'');
     document.querySelectorAll('[data-note]').forEach(e=>e.value=state.notes[e.dataset.note]||'');
-    document.getElementById('rectangle-done').checked=state.rectangleDone;
-    drawRectangle();drawChocolate();drawLine('a');drawLine('b');updateProgress();updateNavigation();
+    if(!isAddition()){document.getElementById('rectangle-done').checked=state.rectangleDone;
+    drawRectangle();drawChocolate();drawLine('a');drawLine('b');}
+    updateProgress();updateNavigation();
     if(result)showResults();
   }
   function route() {
-    const match=location.hash.match(/^#repaso-6\/([1-7])$/);
+    const match=location.hash.match(/^#(repaso-6|brueche-addieren)\/([1-7])$/);
     if(!match){home();return;}
-    activeSection=Number(match[1]);result=sectionResults[activeSection]||null;state.lastSection=activeSection;save();worksheet();
+    if(match[1]===additionId&&match[2]!=='1'){home();return;}
+    if(sheetId!==match[1]){
+      sheetId=match[1];STORAGE_KEY=storageKey(sheetId);
+      titles=isAddition()?['Brüche mit verschiedenen Nennern addieren']:reviewTitles;
+      shortTitles=isAddition()?['Brüche addieren']:reviewShortTitles;
+      loadState();sectionResults={};result=null;
+    }
+    contents=renderContent();total=fields.length+(isAddition()?0:2);
+    activeSection=Number(match[2]);result=sectionResults[activeSection]||null;state.lastSection=activeSection;save();worksheet();
   }
   function updateNavigation() {
     const nav=document.querySelector('.section-nav'),current=nav.querySelector('[aria-current]');
     if(nav.scrollWidth>nav.clientWidth)nav.scrollLeft=Math.max(0,current.offsetLeft-nav.offsetLeft-nav.clientWidth/2+current.clientWidth/2);
-    document.getElementById('section-counter').textContent=`${activeSection} / 7`;
-    document.getElementById('pagination-status').textContent=`Kapitel ${activeSection} von 7`;
+    document.getElementById('section-counter').textContent=`${activeSection} / ${titles.length}`;
+    document.getElementById('pagination-status').textContent=`Kapitel ${activeSection} von ${titles.length}`;
     const prev=document.getElementById('previous-section'),next=document.getElementById('next-section');
     prev.href=activeSection===1?'#':`#${sheetId}/${activeSection-1}`;prev.textContent=activeSection===1?'← Übersicht':'← Zurück';
-    next.href=activeSection===7?`#${sheetId}/1`:`#${sheetId}/${activeSection+1}`;next.textContent=activeSection===7?'Zurück zu Kapitel 1 ↗':'Weiter →';
+    next.href=titles.length===1?'#':activeSection===titles.length?`#${sheetId}/1`:`#${sheetId}/${activeSection+1}`;next.textContent=titles.length===1?'Zur Übersicht ↗':activeSection===titles.length?'Zurück zu Kapitel 1 ↗':'Weiter →';
   }
   function updateProgress() {
     if(!document.getElementById('progress-count'))return;
@@ -133,8 +158,8 @@
     document.getElementById('progress-caption').textContent=n===total?'Alle Kapitel ausgefüllt.':'Du kannst jederzeit aufhören und später weitermachen.';
     document.getElementById('check-all').disabled=remaining!==0;
     document.getElementById('check-title').textContent=remaining?'Jeder Schritt zählt.':'Kapitel vollständig!';
-    document.getElementById('check-hint').textContent=remaining?`In diesem Kapitel fehlen noch ${remaining} Antworten.`:'Du kannst jetzt die Antworten dieses Kapitels prüfen.';
-    for(let i=1;i<=7;i++){const el=document.querySelector(`[data-section-status="${i}"]`),done=completed(i)===totalFor(i);el.textContent=done?'✓':'';el.setAttribute('aria-label',done?'Fertig':`${completed(i)} von ${totalFor(i)}`);}
+    document.getElementById('check-hint').textContent=remaining?remaining===1?'In diesem Kapitel fehlt noch 1 Antwort.':`In diesem Kapitel fehlen noch ${remaining} Antworten.`:'Du kannst jetzt die Antworten dieses Kapitels prüfen.';
+    for(let i=1;i<=titles.length;i++){const el=document.querySelector(`[data-section-status="${i}"]`),done=completed(i)===totalFor(i);el.textContent=done?'✓':'';el.setAttribute('aria-label',done?'Fertig':`${completed(i)} von ${totalFor(i)}`);}
     updateSaveStatus();
   }
   function drawRectangle() {
