@@ -66,3 +66,5 @@ La comprobación por sección permite recibir feedback al terminar cada capítul
 ## Ficha del 15 de noviembre de 2026
 
 `#brueche-addieren/1`: ocho sumas de fracciones con distinto denominador, cuatro con resultado reducible y cuatro irreducibles. Se exige el resultado como fracción completamente simplificada. La ficha tiene su propio progreso, notas y borrado en localStorage; conserva la clave de almacenamiento del repaso anterior.
+
+Segunda sección (`#brueche-addieren/2`): cuatro sumas de un número mixto y una fracción, con respuesta como fracción impropia completamente simplificada. Corrección independiente al completar las cuatro.
