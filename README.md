@@ -62,3 +62,7 @@ node --test tests/math.test.cjs
 La revisión en navegador incluye completar las 106 respuestas, corrección con un error intencionado, reintento correcto, persistencia tras recargar, bloqueo con una sola respuesta pendiente y borrado con confirmación.
 
 La comprobación por sección permite recibir feedback al terminar cada capítulo. El progreso general sigue contabilizando las 106 respuestas de toda la ficha.
+
+## Ficha del 15 de noviembre de 2026
+
+`#brueche-addieren/1`: ocho sumas de fracciones con distinto denominador, cuatro con resultado reducible y cuatro irreducibles. Se exige el resultado como fracción completamente simplificada. La ficha tiene su propio progreso, notas y borrado en localStorage; conserva la clave de almacenamiento del repaso anterior.
