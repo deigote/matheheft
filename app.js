@@ -4,6 +4,7 @@
   let sheetId='repaso-6';
   const additionId='brueche-addieren';
   const additionTasks=[['1/3','1/4','7/12'],['1/6','1/10','4/15'],['2/5','1/6','17/30'],['1/6','3/10','7/15'],['3/8','1/3','17/24'],['5/6','3/10','17/15'],['1/6','1/4','5/12'],['1/10','1/14','6/35']];
+  const mixedAdditionTasks=[['1','1/2','3/4','9/4'],['2','2/3','5/6','7/2'],['1','3/4','2/5','43/20'],['3','1/6','7/10','58/15']];
   const reviewTitles=['Brüche vergleichen und ordnen','Kürzen und Erweitern','Anteile berechnen','Dezimalzahlen auf der Zahlengeraden','Bruch und Dezimalzahl','Dezimalzahlen vergleichen und ordnen','Brüche in Dezimalzahlen umwandeln'];
   const reviewShortTitles=['Brüche vergleichen','Kürzen und Erweitern','Anteile berechnen','Zahlengeraden','Brüche und Dezimalzahlen','Dezimalzahlen vergleichen','Division und Perioden'];
   let titles=reviewTitles,shortTitles=reviewShortTitles;
@@ -60,7 +61,8 @@
   }
   function renderContent() {
     fields.length=0;
-    if(isAddition())return [task('a','Addiere die Brüche und kürze das Ergebnis vollständig.',rows(additionTasks.map(([a,b,answer],i)=>row(i+1,`${fraction(a)} + ${fraction(b)} = ${input(`1sum-${i}`,answer,'reduced',`Aufgabe ${i+1}: ${a} plus ${b}, vollständig gekürzt`)}`))),'Finde einen gemeinsamen Nenner. Manche Ergebnisse lassen sich kürzen, andere nicht. Schreibe deine Antwort als Bruch a/b, auch wenn sie größer als 1 ist.')];
+    if(isAddition())return [task('a','Addiere die Brüche und kürze das Ergebnis vollständig.',rows(additionTasks.map(([a,b,answer],i)=>row(i+1,`${fraction(a)} + ${fraction(b)} = ${input(`1sum-${i}`,answer,'reduced',`Aufgabe ${i+1}: ${a} plus ${b}, vollständig gekürzt`)}`))),'Finde einen gemeinsamen Nenner. Manche Ergebnisse lassen sich kürzen, andere nicht. Schreibe deine Antwort als Bruch a/b, auch wenn sie größer als 1 ist.'),
+      task('a','Addiere die gemischte Zahl und den Bruch.',rows(mixedAdditionTasks.map(([whole,a,b,answer],i)=>row(i+1,`${whole} ${fraction(a)} + ${fraction(b)} = ${input(`2sum-${i}`,answer,'reduced',`Aufgabe ${i+1}: ${whole} ${a} plus ${b}, als vollständig gekürzter unechter Bruch`)}`))),'Schreibe das Ergebnis als unechten Bruch a/b und kürze vollständig. Gib keine gemischte Zahl ein.')];
     const sections=[];
     const compares=[['4/7','5/7','<'],['3/5','9/15','='],['5/8','2/3','<'],['7/9','3/4','>'],['5/6','8/10','>'],['3/10','1/3','<'],['7/12','2/3','<'],['4/9','8/18','=']];
     sections.push(task('a','Setze jeweils das richtige Zeichen <, > oder = ein.',rows(compares.map(([a,b,c],i)=>row(i+1,`${fraction(a)}${input(`1a-${i}`,c,'symbol',`1a, ${i+1}: ${a} verglichen mit ${b}`)}${fraction(b)}`))))+
@@ -106,7 +108,7 @@
   function totalFor(section) {return fields.filter(f=>f.section===section).length+(!isAddition()&&section===3?2:0);}
   function clearResult() {delete sectionResults[activeSection];if(!result)return;result=null;document.querySelectorAll('.is-correct,.is-incorrect').forEach(e=>e.classList.remove('is-correct','is-incorrect'));document.querySelectorAll('[aria-invalid]').forEach(e=>e.removeAttribute('aria-invalid'));document.querySelectorAll('.field-feedback,.special-feedback').forEach(e=>e.textContent='');document.getElementById('results')?.replaceChildren();}
   function home() {
-    const cards=[{id:additionId,date:'2026-11-15',label:'15. NOV. 2026',title:'Brüche addieren',description:'Einen gemeinsamen Nenner finden, Brüche addieren und Ergebnisse vollständig kürzen.',chapters:1,total:8,ids:additionTasks.map((_,i)=>`1sum-${i}`)},{id:'repaso-6',date:'2026-11-05',label:'5. NOV. 2026',title:'Brüche und Dezimalzahlen',description:'Brüche vergleichen, kürzen und Anteile berechnen. Dazu Zahlengeraden, Dezimalzahlen und periodische Divisionen.',chapters:7,total:106}].map(sheet=>{
+    const cards=[{id:additionId,date:'2026-11-15',label:'15. NOV. 2026',title:'Brüche addieren',description:'Einen gemeinsamen Nenner finden, Brüche addieren und Ergebnisse vollständig kürzen.',chapters:2,total:12,ids:[...additionTasks.map((_,i)=>`1sum-${i}`),...mixedAdditionTasks.map((_,i)=>`2sum-${i}`)]},{id:'repaso-6',date:'2026-11-05',label:'5. NOV. 2026',title:'Brüche und Dezimalzahlen',description:'Brüche vergleichen, kürzen und Anteile berechnen. Dazu Zahlengeraden, Dezimalzahlen und periodische Divisionen.',chapters:7,total:106}].map(sheet=>{
       let saved={};try{saved=JSON.parse(localStorage.getItem(storageKey(sheet.id))||'{}')||{};}catch{}
       const answers=saved.answers||{};
       const done=sheet.id===additionId?sheet.ids.filter(id=>String(answers[id]||'').trim()).length:Object.values(answers).filter(v=>typeof v==='string'&&v.trim()).length+Number(saved.rectangleDone===true)+Number(Array.isArray(saved.chocolate)&&saved.chocolate.length===24&&saved.chocolate.every(Boolean));
@@ -131,11 +133,11 @@
   function route() {
     const match=location.hash.match(/^#(repaso-6|brueche-addieren)\/([1-7])$/);
     if(!match){home();return;}
-    if(match[1]===additionId&&match[2]!=='1'){home();return;}
+    if(match[1]===additionId&&!['1','2'].includes(match[2])){home();return;}
     if(sheetId!==match[1]){
       sheetId=match[1];STORAGE_KEY=storageKey(sheetId);
-      titles=isAddition()?['Brüche mit verschiedenen Nennern addieren']:reviewTitles;
-      shortTitles=isAddition()?['Brüche addieren']:reviewShortTitles;
+      titles=isAddition()?['Brüche mit verschiedenen Nennern addieren','Gemischte Zahlen und Brüche addieren']:reviewTitles;
+      shortTitles=isAddition()?['Brüche addieren','Gemischte Zahlen addieren']:reviewShortTitles;
       loadState();sectionResults={};result=null;
     }
     contents=renderContent();total=fields.length+(isAddition()?0:2);
